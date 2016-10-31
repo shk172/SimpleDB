@@ -71,11 +71,6 @@ public class TupleDesc implements Serializable {
         if(typeAr.length <= 0){
         	throw new IllegalArgumentException("There must be at least one entry for Type");
         }
-        
-        else{
-            this.typeAr = typeAr;
-            this.fieldAr = fieldAr;        	
-        }
     }
 
     /**
@@ -87,21 +82,15 @@ public class TupleDesc implements Serializable {
      *            TupleDesc. It must contain at least one entry.
      */
     public TupleDesc(Type[] typeAr) {
-        if(typeAr.length <= 0){
-        	throw new IllegalArgumentException("There must be at least one entry for Type");
-        }
-        
-        else{
-        	this.typeAr = typeAr;
-        }
-        
+        // some code goes here
     }
 
     /**
      * @return the number of fields in this TupleDesc
      */
     public int numFields() {
-        return this.typeAr.length;
+        // some code goes here
+        return 0;
     }
 
     /**

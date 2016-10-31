@@ -35,21 +35,17 @@ public class TupleDesc implements Serializable {
         }
     }
 
-	private TDItem[] TDItems;
-	private Type[] typeAr;
-	private String[] fieldAr;
     /**
      * @return
      *        An iterator which iterates over all the field TDItems
      *        that are included in this TupleDesc
      * */
-    public Iterator<TDItem> iterator(TDItem[] TDItems)  {
-    	this.TDItems = TDItems;
-    	public boolean hasNext(){
+    public Iterator<TDItem> iterator() {
+    	Iterator<TDItem> it = new Iterator<TDItem>(){
+    		private int currentIndex = 0;
+    		public boolean hasNext(){
     			
-    	}
-    	public TDItem next(){
-    		
+    		}
     	}
     
     }
@@ -67,15 +63,8 @@ public class TupleDesc implements Serializable {
      *            array specifying the names of the fields. Note that names may
      *            be null.
      */
-    public TupleDesc(Type[] typeAr, String[] fieldAr) throws DbException {
-        if(typeAr.length <= 0){
-        	throw new IllegalArgumentException("There must be at least one entry for Type");
-        }
-        
-        else{
-            this.typeAr = typeAr;
-            this.fieldAr = fieldAr;        	
-        }
+    public TupleDesc(Type[] typeAr, String[] fieldAr) {
+        // some code goes here
     }
 
     /**
@@ -87,21 +76,15 @@ public class TupleDesc implements Serializable {
      *            TupleDesc. It must contain at least one entry.
      */
     public TupleDesc(Type[] typeAr) {
-        if(typeAr.length <= 0){
-        	throw new IllegalArgumentException("There must be at least one entry for Type");
-        }
-        
-        else{
-        	this.typeAr = typeAr;
-        }
-        
+        // some code goes here
     }
 
     /**
      * @return the number of fields in this TupleDesc
      */
     public int numFields() {
-        return this.typeAr.length;
+        // some code goes here
+        return 0;
     }
 
     /**
