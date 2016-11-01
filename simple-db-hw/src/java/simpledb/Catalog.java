@@ -18,6 +18,38 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 public class Catalog {
 
+	//class for the table with the necessary parameters
+	//that are used in other functions
+	public static class Table{
+		int tableID;
+		String name;
+		TupleDesc tupleDescription;
+		DbFile dbFile;
+		String pKey;
+		Table(int tableid, String name, TupleDesc tupledesc, DbFile file, String primaryKey){
+			this.tableID = tableid;
+			this.name = name;
+			this.tupleDescription = tupledesc;
+			this.dbFile = file;
+			this.pKey = primaryKey;
+		}
+		
+		Table(int tableid, String name, TupleDesc tupledesc, DbFile file){
+			this.tableID = tableid;
+			this.name = name;
+			this.tupleDescription = tupledesc;
+			this.dbFile = file;
+			this.pKey = "";
+		}
+	}
+	
+	//So I'm using an array as a temporary collection, but
+	//I think a dictionary might work better? Since we have to retrieve
+	//the tables by tableID or name
+	Table[] tables;
+	
+	
+	
     /**
      * Constructor.
      * Creates a new, empty catalog.
