@@ -209,11 +209,16 @@ public class TupleDesc implements Serializable {
         if (!(o instanceof TupleDesc)) {
         	return false;
         }
+        if (fields.length != ((TupleDesc) o).fields.length) {
+        	return false;
+        }
         for (int i = 0; i < fields.length; i++) {
-        	if (fields[i] == (TupleDesc o).fields[i]) {
-        		
+        	if (fields[i].fieldType != ((TupleDesc) o).fields[i].fieldType) {
+        		System.out.println("me: " + fields[i] + " object: " + ((TupleDesc) o).fields[i]);
+        		return false;
         	}
         }
+        return true;
     }
 
     public int hashCode() {
