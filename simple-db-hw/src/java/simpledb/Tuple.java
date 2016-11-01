@@ -4,6 +4,8 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Iterator;
 
+import simpledb.TupleDesc.TDItem;
+
 /**
  * Tuple maintains information about the contents of a tuple. Tuples have a
  * specified schema specified by a TupleDesc object and contain Field objects
@@ -13,6 +15,8 @@ public class Tuple implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
+    private TupleDesc tupleDescription;
+    private Field[] fieldArray;
     /**
      * Create a new tuple with the specified schema (type).
      * 
@@ -21,16 +25,26 @@ public class Tuple implements Serializable {
      *            instance with at least one field.
      */
     public Tuple(TupleDesc td) {
-
-        // some code goes here
+    	
+    	//Store the tuple description
+    	tupleDescription = td;
+    	
+    	//We have to call the iterator to access the fields of the description because it is private
+    	Iterator<TDItem> it = tupleDescription.iterator();
+    	
+    	//Create new field for each of the entries in the description, and store
+    	//it in the array of fields in the tuples.
+    	fieldArray = new Field[td.numFields()];
+    	for(int i = 0; i < td.numFields(); i++){
+    		fieldArray[i] = it.next();
+    	}
     }
 
     /**
      * @return The TupleDesc representing the schema of this tuple.
      */
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        return tupleDescription;
     }
 
     /**
@@ -61,7 +75,7 @@ public class Tuple implements Serializable {
      *            new value for the field.
      */
     public void setField(int i, Field f) {
-        // some code goes here
+        fieldArray[i] = f;
     }
 
     /**
@@ -71,8 +85,7 @@ public class Tuple implements Serializable {
      *            field index to return. Must be a valid index.
      */
     public Field getField(int i) {
-        // some code goes here
-        return null;
+        return fieldArray[i];
     }
 
     /**

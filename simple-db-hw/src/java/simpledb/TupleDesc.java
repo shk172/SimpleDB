@@ -1,7 +1,11 @@
 package simpledb;
 
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.io.Serializable;
 import java.util.*;
+
+import simpledb.Predicate.Op;
 
 /**
  * TupleDesc describes the schema of a tuple.
@@ -11,7 +15,7 @@ public class TupleDesc implements Serializable {
     /**
      * A help class to facilitate organizing the information of each field
      * */
-    public static class TDItem implements Serializable {
+    public static class TDItem implements Serializable, Field {
 
         private static final long serialVersionUID = 1L;
 
@@ -33,6 +37,24 @@ public class TupleDesc implements Serializable {
         public String toString() {
             return fieldName + "(" + fieldType + ")";
         }
+
+		@Override
+		public void serialize(DataOutputStream dos) throws IOException {
+			// TODO Auto-generated method stub
+			
+		}
+
+		@Override
+		public boolean compare(Op op, Field value) {
+			// TODO Auto-generated method stub
+			return false;
+		}
+
+		@Override
+		public Type getType() {
+			// TODO Auto-generated method stub
+			return null;
+		}
     }
 
 	private TDItem[] fields;
