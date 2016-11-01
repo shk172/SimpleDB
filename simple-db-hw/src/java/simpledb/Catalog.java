@@ -54,7 +54,7 @@ public class Catalog {
      * Creates a new, empty catalog.
      */
     public Catalog() {
-    	//Initializes the hastable
+    	//Initializes the hashtable
     	tables = new Hashtable<Integer, Table>();
     }
 
@@ -107,8 +107,10 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
-        // some code goes here
-        return null;
+    	if(tables.get(tableid) == null)
+    		throw new NoSuchElementException("Table with the given id was not found");
+    	else
+    		return tables.get(tableid).tupleDescription;
     }
 
     /**
@@ -118,13 +120,17 @@ public class Catalog {
      *     function passed to addTable
      */
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
-        // some code goes here
-        return null;
+    	if(tables.get(tableid) == null)
+    		throw new NoSuchElementException("Table with the given id was not found");
+    	else
+    		return tables.get(tableid).dbFile;
     }
 
-    public String getPrimaryKey(int tableid) {
-        // some code goes here
-        return null;
+    public String getPrimaryKey(int tableid) throws NoSuchElementException {
+    	if(tables.get(tableid) == null)
+    		throw new NoSuchElementException("Table with the given id was not found");
+    	else
+    		return tables.get(tableid).pKey;
     }
 
     public Iterator<Integer> tableIdIterator() {
