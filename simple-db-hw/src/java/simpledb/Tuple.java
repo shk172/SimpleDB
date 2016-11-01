@@ -1,7 +1,7 @@
 package simpledb;
 
 import java.io.Serializable;
-import java.util.Arrays;
+//import java.util.Arrays;
 import java.util.Iterator;
 
 import simpledb.TupleDesc.TDItem;
@@ -17,21 +17,22 @@ public class Tuple implements Serializable {
 
     private TupleDesc tupleDescription;
     private Field[] fieldArray;
+    private RecordId rid;
     /**
      * Create a new tuple with the specified schema (type).
-     * 
+     *
      * @param td
      *            the schema of this tuple. It must be a valid TupleDesc
      *            instance with at least one field.
      */
     public Tuple(TupleDesc td) {
-    	
+
     	//Store the tuple description
     	tupleDescription = td;
-    	
+
     	//We have to call the iterator to access the fields of the description because it is private
     	Iterator<TDItem> it = tupleDescription.iterator();
-    	
+
     	//Create new field for each of the entries in the description, and store
     	//it in the array of fields in the tuples.
     	fieldArray = new Field[td.numFields()];
@@ -52,23 +53,22 @@ public class Tuple implements Serializable {
      *         be null.
      */
     public RecordId getRecordId() {
-        // some code goes here
-        return null;
+        return this.rid;
     }
 
     /**
      * Set the RecordId information for this tuple.
-     * 
+     *
      * @param rid
      *            the new RecordId for this tuple.
      */
     public void setRecordId(RecordId rid) {
-        // some code goes here
+        this.rid = rid;
     }
 
     /**
      * Change the value of the ith field of this tuple.
-     * 
+     *
      * @param i
      *            index of the field to change. It must be a valid index.
      * @param f
@@ -80,7 +80,7 @@ public class Tuple implements Serializable {
 
     /**
      * @return the value of the ith field, or null if it has not been set.
-     * 
+     *
      * @param i
      *            field index to return. Must be a valid index.
      */
@@ -91,31 +91,56 @@ public class Tuple implements Serializable {
     /**
      * Returns the contents of this Tuple as a string. Note that to pass the
      * system tests, the format needs to be as follows:
-     * 
+     *
      * column1\tcolumn2\tcolumn3\t...\tcolumnN\n
-     * 
+     *
      * where \t is any whitespace, except newline, and \n is a newline
      */
     public String toString() {
-        // some code goes here
-        throw new UnsupportedOperationException("Implement this");
+    	StringBuilder ret = new StringBuilder();
+      for (int i = 0; i < fieldArray.length - 1; i++) {
+          ret.append(fieldArray + " ");
+      }
+      ret.append(fieldArray[fieldArray.length - 1] + "\n");
+      return ret.toString();
     }
-    
+
     /**
      * @return
      *        An iterator which iterates over all the fields of this tuple
      * */
     public Iterator<Field> fields()
     {
-        // some code goes here
-        return null;
+      Iterator<Field> it = new Iterator<Field>() {
+        int i = 0;
+
+        public boolean hasNext(){
+          return i < fieldArray.length;
+
+        }
+        public Field next(){
+          return fieldArray[i++];
+        }
+      };
+      return it;
     }
-    
+
     /**
-     * reset the TupleDesc of thi tuple
+     * reset the TupleDesc of this tuple
      * */
     public void resetTupleDesc(TupleDesc td)
     {
-        // some code goes here
+    	//Store the tuple description
+    	tupleDescription = td;
+
+    	//We have to call the iterator to access the fields of the description because it is private
+    	Iterator<TDItem> it = tupleDescription.iterator();
+
+    	//Create new field for each of the entries in the description, and store
+    	//it in the array of fields in the tuples.
+    	fieldArray = new Field[td.numFields()];
+    	for(int i = 0; i < td.numFields(); i++){
+    		fieldArray[i] = it.next();
+    	}
     }
 }
