@@ -26,27 +26,26 @@ public class Catalog {
 		TupleDesc tupleDescription;
 		DbFile dbFile;
 		String pKey;
-		Table(int tableid, String name, TupleDesc tupledesc, DbFile file, String primaryKey){
-			this.tableID = tableid;
+		Table(DbFile file, String name, String pkey){
+			this.tableID = file.getId();
 			this.name = name;
-			this.tupleDescription = tupledesc;
+			this.tupleDescription = file.getTupleDesc();
 			this.dbFile = file;
-			this.pKey = primaryKey;
+			this.pKey = pkey;
 		}
 		
-		Table(int tableid, String name, TupleDesc tupledesc, DbFile file){
-			this.tableID = tableid;
+		Table(DbFile file, String name){
+			this.tableID = file.getId();
 			this.name = name;
-			this.tupleDescription = tupledesc;
+			this.tupleDescription = file.getTupleDesc();
 			this.dbFile = file;
 			this.pKey = "";
 		}
 	}
 	
-	//So I'm using an array as a temporary collection, but
-	//I think a dictionary might work better? Since we have to retrieve
-	//the tables by tableID or name
-	Table[] tables;
+	//Dictionary with table ID from DbFile.getId as the key and
+	//the table as value
+	Map<Integer, Table> tables;
 	
 	
 	
@@ -55,7 +54,8 @@ public class Catalog {
      * Creates a new, empty catalog.
      */
     public Catalog() {
-        // some code goes here
+    	//Initializes the hastable
+    	tables = new Hashtable<Integer, Table>();
     }
 
     /**
@@ -68,7 +68,12 @@ public class Catalog {
      * @param pkeyField the name of the primary key field
      */
     public void addTable(DbFile file, String name, String pkeyField) {
-        // some code goes here
+    	//Create a new table
+    	Table table = new Table(file, name, pkeyField);
+    	
+    	//And put it in out list of tables.
+    	tables.put(file.getId(), table);
+    	
     }
 
     public void addTable(DbFile file, String name) {
