@@ -78,8 +78,7 @@ public class BufferPool {
         if (numPages == maxPages) {
         	throw new TransactionAbortedException();
         }
-        //TODO load page out of memory
-        // this needs to iterate through some DbFiles but im not sure where those files are 
+
         Page ret = null;
         Iterator<Integer> tablesIter = Database.getCatalog().tableIdIterator();
         Integer curr = tablesIter.next();
@@ -93,7 +92,7 @@ public class BufferPool {
         		curr = tablesIter.next();
         	}
         }
-        return ret;
+        throw new DbException("pid not in database");
         
     }
 
