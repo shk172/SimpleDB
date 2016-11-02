@@ -10,14 +10,18 @@ public class HeapPageId implements PageId {
      * @param tableId The table that is being referenced
      * @param pgNo The page number in that table.
      */
+	
+	int tableID;
+	int pageNum;
+	
     public HeapPageId(int tableId, int pgNo) {
-        // some code goes here
+    	this.tableID = tableId;
+    	this.pageNum = pgNo;
     }
 
     /** @return the table associated with this PageId */
     public int getTableId() {
-        // some code goes here
-        return 0;
+    	return tableID;
     }
 
     /**
@@ -25,8 +29,7 @@ public class HeapPageId implements PageId {
      *   this PageId
      */
     public int pageNumber() {
-        // some code goes here
-        return 0;
+    	return pageNum;
     }
 
     /**
@@ -36,8 +39,12 @@ public class HeapPageId implements PageId {
      * @see BufferPool
      */
     public int hashCode() {
-        // some code goes here
-        throw new UnsupportedOperationException("implement this");
+    	//As the description says, the hash code is literally concatenation of
+    	// the tableID and pageNum, combined by adding the two as strings and 
+    	// converting back to int.
+    	String stringHash = Integer.toString(tableID) + Integer.toString(pageNum);
+    	int integerHash = Integer.parseInt(stringHash);
+    	return integerHash;
     }
 
     /**
@@ -48,8 +55,16 @@ public class HeapPageId implements PageId {
      *   ids are the same)
      */
     public boolean equals(Object o) {
-        // some code goes here
-        return false;
+        if (!(o instanceof PageId)) {
+        	return false;
+        }
+        if (tableID != ((PageId) o).getTableId()) {
+        	return false;
+        }
+        if(pageNum != ((PageId) o).pageNumber()){
+        	return false;
+        }
+        return true;
     }
 
     /**
