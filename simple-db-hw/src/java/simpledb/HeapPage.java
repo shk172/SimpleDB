@@ -1,6 +1,9 @@
 package simpledb;
 
 import java.util.*;
+
+import org.w3c.dom.events.EventException;
+
 import java.io.*;
 
 /**
@@ -289,8 +292,9 @@ public class HeapPage implements Page {
         int header_byte = i / 8;
         int header_bit = i % 8;
     	
-    	int used = ((header[header_byte] >> header_bit) & 1);
-    	return (used == 0) ? false:true;
+    	int used = (header[header_byte] >> header_bit) & 1;
+
+    	return (used == 1) ? true:false;
     }
 
     /**
@@ -299,10 +303,9 @@ public class HeapPage implements Page {
     private void markSlotUsed(int i, boolean value) {
         int header_byte = i / 8; 
         int header_bit = i % 8;
-    	byte one = (byte) 1;
-    	
+  
     	// xor flips the bit- if was in use now empty, and visa versa
-        header[header_byte] = (byte) ((header[header_byte] ^ 1 << header_bit) & 0xff) ;
+        header[header_byte] = (byte) ((header[header_byte] ^ 1 << header_bit) & 0xff);
 	
     }
 
@@ -313,13 +316,17 @@ public class HeapPage implements Page {
     public Iterator<Tuple> iterator() {
 		  Iterator<Tuple> it = new Iterator<Tuple>() {
 			  int i = 0;
-			  
 			  public boolean hasNext(){
-				  while (!(isSlotUsed(++i)));
+				  while (i < numSlots && !(isSlotUsed(i))) {
+					  i++;
+				  }
 				  return i < numSlots;
 			  }
 			  
 			  public Tuple next(){
+				  while (i < numSlots && !(isSlotUsed(i))) {
+					  i++;
+				  }
 				  return tuples[i];
 			  }
 		  };
