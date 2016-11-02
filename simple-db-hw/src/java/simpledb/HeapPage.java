@@ -317,14 +317,14 @@ public class HeapPage implements Page {
 		  Iterator<Tuple> it = new Iterator<Tuple>() {
 			  int i = 0;
 			  public boolean hasNext(){
-				  while (i < numSlots && !(isSlotUsed(i))) {
+				  while (i < tuples.length) {
 					  i++;
 				  }
-				  return i < numSlots;
+				  return i < tuples.length;
 			  }
 			  
 			  public Tuple next(){
-				  while (i < numSlots && !(isSlotUsed(i))) {
+				  while (hasNext() && isSlotUsed(i)) {
 					  i++;
 				  }
 				  return tuples[i];
