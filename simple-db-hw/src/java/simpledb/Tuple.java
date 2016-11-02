@@ -15,7 +15,7 @@ public class Tuple implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private TupleDesc tupleDescription;
+    private TupleDesc tupleDescription; // TODO make a pointer
     private Field[] fieldArray;
     private RecordId rid;
     /**
