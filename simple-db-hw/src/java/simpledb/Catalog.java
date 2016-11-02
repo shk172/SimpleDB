@@ -7,6 +7,8 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 
+import simpledb.TupleDesc.TDItem;
+
 /**
  * The Catalog keeps track of all available tables in the database and their
  * associated schemas.
@@ -21,11 +23,13 @@ public class Catalog {
 	//class for the table with the necessary parameters
 	//that are used in other functions
 	public static class Table{
+		
 		int tableID;
 		String name;
 		TupleDesc tupleDescription;
 		DbFile dbFile;
 		String pKey;
+		
 		Table(DbFile file, String name, String pkey){
 			this.tableID = file.getId();
 			this.name = name;
@@ -45,7 +49,7 @@ public class Catalog {
 	
 	//Dictionary with table ID from DbFile.getId as the key and
 	//the table as value
-	Map<Integer, Table> tablesByID;
+	Map<Integer, Table> tablesById;
 	Map<String, Table> tablesByName;
 	
 	
@@ -56,7 +60,7 @@ public class Catalog {
      */
     public Catalog() {
     	//Initializes the hashtable
-    	tablesByID = new HashMap<Integer, Table>();
+    	tablesById = new HashMap<Integer, Table>();
     	tablesByName = new HashMap<String, Table>();
     }
 
@@ -74,8 +78,7 @@ public class Catalog {
     	Table table = new Table(file, name, pkeyField);
     	
     	//And put it in out list of tables.
-    	//Apparently this handles duplication by name but not by ID?
-    	tablesByID.put(file.getId(), table);
+    	tablesById.put(file.getId(), table);
     	tablesByName.put(name, table);
     }
 
@@ -112,10 +115,10 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
-    	if(tablesByID.get(tableid) == null)
+    	if(tablesById.get(tableid) == null)
     		throw new NoSuchElementException("Table with the given id was not found");
     	else
-    		return tablesByID.get(tableid).tupleDescription;
+    		return tablesById.get(tableid).tupleDescription;
     }
 
     /**
@@ -125,31 +128,31 @@ public class Catalog {
      *     function passed to addTable
      */
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
-    	if(tablesByID.get(tableid) == null)
+    	if(tablesById.get(tableid) == null)
     		throw new NoSuchElementException("Table with the given id was not found");
     	else
-    		return tablesByID.get(tableid).dbFile;
+    		return tablesById.get(tableid).dbFile;
     }
 
     public String getPrimaryKey(int tableid) throws NoSuchElementException {
-    	if(tablesByID.get(tableid) == null)
+    	if(tablesById.get(tableid) == null)
     		throw new NoSuchElementException("Table with the given id was not found");
     	else
-    		return tablesByID.get(tableid).pKey;
+    		return tablesById.get(tableid).pKey;
     }
 
     public Iterator<Integer> tableIdIterator() {
-        // some code goes here
-        return null;
+    	return this.tablesById.keySet().iterator();
     }
 
     public String getTableName(int id) {
-        return tablesByID.get(id).name;
+        return this.tablesById.get(id).name;
     }
     
     /** Delete all tables from the catalog */
     public void clear() {
-        // some code goes here
+    	this.tablesById = new HashMap<Integer, Table>();
+    	this.tablesByName = new HashMap<String, Table>();
     }
     
     /**

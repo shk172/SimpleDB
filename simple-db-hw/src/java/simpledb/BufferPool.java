@@ -1,8 +1,8 @@
 package simpledb;
 
 import java.io.*;
-
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.ArrayList;
+import java.util.Iterator;
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -20,19 +20,23 @@ public class BufferPool {
     private static final int PAGE_SIZE = 4096;
 
     private static int pageSize = PAGE_SIZE;
+    private int maxPages;
+    private int numPages;
+    
+    private ArrayList<Page> pageArray = new ArrayList<Page>();
     
     /** Default number of pages passed to the constructor. This is used by
     other classes. BufferPool should use the numPages argument to the
     constructor instead. */
     public static final int DEFAULT_PAGES = 50;
-
+    
     /**
      * Creates a BufferPool that caches up to numPages pages.
      *
      * @param numPages maximum number of pages in this buffer pool.
      */
     public BufferPool(int numPages) {
-        // some code goes here
+        this.maxPages = numPages;
     }
     
     public static int getPageSize() {
@@ -66,8 +70,31 @@ public class BufferPool {
      */
     public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
-        // some code goes here
-        return null;
+        for (Page page : pageArray) {
+        	if (page.getId() == pid) {
+        		return page;
+        	}
+        }
+        if (numPages == maxPages) {
+        	throw new TransactionAbortedException();
+        }
+        //TODO load page out of memory
+        // this needs to iterate through some DbFiles but im not sure where those files are 
+        Page ret = null;
+        Iterator<Integer> tablesIter = Database.getCatalog().tableIdIterator();
+        Integer curr = tablesIter.next();
+        while (tablesIter.hasNext()) {
+        	DbFile dbFile = Database.getCatalog().getDatabaseFile(curr);
+        	try {
+        		ret = dbFile.readPage(pid);
+        		return ret;
+        	}
+        	finally {
+        		curr = tablesIter.next();
+        	}
+        }
+        return ret;
+        
     }
 
     /**
