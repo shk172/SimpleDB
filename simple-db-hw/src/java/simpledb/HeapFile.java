@@ -66,22 +66,24 @@ public class HeapFile implements DbFile {
     public Page readPage(PageId pid) {
     	
     	Database.getBufferPool();
+    	
+    	int totalPages = ((int) file.length()) / BufferPool.getPageSize();
+    	if (pid.pageNumber() >= totalPages) {
+    		throw new IllegalArgumentException("table number too high");
+    	}
     	int page_num = pid.pageNumber();
     	byte page[] = new byte[BufferPool.getPageSize()];
-    			
     	try {
 			RandomAccessFile raf = new RandomAccessFile(file, "r");
-			raf.skipBytes(BufferPool.getPageSize() * page_num);
 			raf.read(page);
 			raf.close();
 			return new HeapPage((HeapPageId) pid, page);
-			
 		} catch (FileNotFoundException e) {
 			throw new IllegalArgumentException("file not found");
 		} catch (IOException i) {
 			throw new IllegalArgumentException("page " + page_num + " not found");
-		}
-    	
+	}
+		
     }
 
     // see DbFile.java for javadocs
@@ -136,7 +138,6 @@ public class HeapFile implements DbFile {
 				Iterator<Tuple> pi = p.iterator();
 				while (pi.hasNext()) {
 					tuples.add(pi.next());
-					System.out.print("tuple added");
 				}
 				i = 0;
 				return true;
@@ -160,6 +161,7 @@ public class HeapFile implements DbFile {
 			if (i < tuples.size()) {
 				return true;
 			}
+			load_new_page(p);
 			while(tuples.size() == 0) {
 				boolean loaded = load_new_page(p);
 				if (!loaded) {
@@ -176,6 +178,7 @@ public class HeapFile implements DbFile {
 			if (!open) {
 				throw new NoSuchElementException();
 			}
+
 			return tuples.get(i++);
 
 		}

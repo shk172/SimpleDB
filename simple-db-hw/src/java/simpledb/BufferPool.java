@@ -20,8 +20,8 @@ public class BufferPool {
     private static final int PAGE_SIZE = 4096;
 
     private static int pageSize = PAGE_SIZE;
-    private int maxPages;
     private int numPages;
+    private int pageCount;
     
     private ArrayList<Page> pageArray;
     
@@ -37,8 +37,8 @@ public class BufferPool {
      */
     public BufferPool(int numPages) {
     	pageArray = new ArrayList<Page>();
-        this.maxPages = numPages;
-        this.numPages = 0;
+        this.numPages = numPages;
+        this.pageCount = 0;
     }
     
     public static int getPageSize() {
@@ -77,7 +77,7 @@ public class BufferPool {
         		return page;
         	}
         }
-        if (numPages == maxPages) {				// if the buffer is full panic
+        if (pageCount == numPages) {				// if the buffer is full panic
         	throw new TransactionAbortedException();
         }
 
@@ -87,16 +87,20 @@ public class BufferPool {
         DbFile dbFile;
         int j = 0;
         while (tablesIter.hasNext()) { // go through all tables ids in the catalog 
-        	//System.out.println(j++);
         	curr = tablesIter.next();
         	dbFile = Database.getCatalog().getDatabaseFile(curr); // get the DbFile
         	// if you have the pid return it  
-        		ret = dbFile.readPage(pid);
-
-        		pageArray.add(ret);
-        		numPages++;
-        		return ret;
+        		try {
+        			ret = dbFile.readPage(pid);
+	        		pageArray.add(ret);
+	        		pageCount++;
+	        		return ret;
+        		} catch(IllegalArgumentException e) {
+        			System.out.println(e.getMessage());
+        			continue;
+        		}
         }
+        System
         throw new DbException("pid not in database");
         
     }
