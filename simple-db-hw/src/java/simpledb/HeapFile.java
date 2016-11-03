@@ -16,7 +16,7 @@ import java.util.*;
 public class HeapFile implements DbFile {
 	
 	TupleDesc td;
-	static File file;
+	File file;
 	int id;
     /**
      * Constructs a heap file backed by the specified file.
@@ -163,7 +163,7 @@ public class HeapFile implements DbFile {
 			while(tuples.size() == 0) {
 				boolean loaded = load_new_page(p);
 				if (!loaded) {
-					System.out.println("false!");
+					System.out.println("no more pages!");
 					return false;
 				}
 			}

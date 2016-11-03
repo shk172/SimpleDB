@@ -23,7 +23,7 @@ public class BufferPool {
     private int maxPages;
     private int numPages;
     
-    private ArrayList<Page> pageArray = new ArrayList<Page>();
+    private ArrayList<Page> pageArray;
     
     /** Default number of pages passed to the constructor. This is used by
     other classes. BufferPool should use the numPages argument to the
@@ -36,7 +36,9 @@ public class BufferPool {
      * @param numPages maximum number of pages in this buffer pool.
      */
     public BufferPool(int numPages) {
+    	pageArray = new ArrayList<Page>();
         this.maxPages = numPages;
+        this.numPages = 0;
     }
     
     public static int getPageSize() {
@@ -70,27 +72,30 @@ public class BufferPool {
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
-        for (Page page : pageArray) {
-        	if (page.getId() == pid) {
+        for (Page page : pageArray) { 			// go through all buffered pages looking for pages with equal pids
+        	if (page.getId().equals(pid)) {		// if you find one return it
         		return page;
         	}
         }
-        if (numPages == maxPages) {
+        if (numPages == maxPages) {				// if the buffer is full panic
         	throw new TransactionAbortedException();
         }
 
-        Page ret = null;
+        Page ret = null; 						//initialize a return values outside loop
         Iterator<Integer> tablesIter = Database.getCatalog().tableIdIterator();
-        Integer curr = tablesIter.next();
-        while (tablesIter.hasNext()) {
-        	DbFile dbFile = Database.getCatalog().getDatabaseFile(curr);
-        	try {
+        int curr;
+        DbFile dbFile;
+        int j = 0;
+        while (tablesIter.hasNext()) { // go through all tables ids in the catalog 
+        	//System.out.println(j++);
+        	curr = tablesIter.next();
+        	dbFile = Database.getCatalog().getDatabaseFile(curr); // get the DbFile
+        	// if you have the pid return it  
         		ret = dbFile.readPage(pid);
+
+        		pageArray.add(ret);
+        		numPages++;
         		return ret;
-        	}
-        	finally {
-        		curr = tablesIter.next();
-        	}
         }
         throw new DbException("pid not in database");
         
