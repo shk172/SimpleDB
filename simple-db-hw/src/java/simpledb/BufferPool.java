@@ -2,7 +2,9 @@ package simpledb;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Iterator;
+
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -23,7 +25,7 @@ public class BufferPool {
     private int numPages;
     private int pageCount;
     
-    private ArrayList<Page> pageArray;
+    private java.util.concurrent.ConcurrentHashMap<Integer, Page> pageBuf;
     
     /** Default number of pages passed to the constructor. This is used by
     other classes. BufferPool should use the numPages argument to the
@@ -36,7 +38,7 @@ public class BufferPool {
      * @param numPages maximum number of pages in this buffer pool.
      */
     public BufferPool(int numPages) {
-    	pageArray = new ArrayList<Page>();
+    	this.pageBuf = new java.util.concurrent.ConcurrentHashMap<Integer, Page>();
         this.numPages = numPages;
         this.pageCount = 0;
     }
@@ -72,16 +74,18 @@ public class BufferPool {
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
-        for (Page page : pageArray) { 			// go through all buffered pages looking for pages with equal pids
-        	if (page.getId().equals(pid)) {		// if you find one return it
-        		return page;
-        	}
-        }
-        if (pageCount == numPages) {				// if the buffer is full panic
+    	System.out.println(pid.getTableId() + pid.pageNumber());	
+    	Page buffPage = pageBuf.get(pid.hashCode());	
+    		if (buffPage != null) {
+    			return buffPage;
+    		}
+
+        if (pageCount == numPages) {
+        	// if the buffer is full panic
         	throw new TransactionAbortedException();
         }
 
-        Page ret = null; 						//initialize a return values outside loop
+        Page ret = null; // initialize a return values outside loop
         Iterator<Integer> tablesIter = Database.getCatalog().tableIdIterator();
         int curr;
         DbFile dbFile;
@@ -92,15 +96,14 @@ public class BufferPool {
         	// if you have the pid return it  
         		try {
         			ret = dbFile.readPage(pid);
-	        		pageArray.add(ret);
+	        		pageBuf.put(pid.hashCode(), ret);
 	        		pageCount++;
 	        		return ret;
         		} catch(IllegalArgumentException e) {
-        			System.out.println(e.getMessage());
+        			System.out.println(pid.pageNumber() + " : " + e.getMessage());
         			continue;
         		}
         }
-        System
         throw new DbException("pid not in database");
         
     }

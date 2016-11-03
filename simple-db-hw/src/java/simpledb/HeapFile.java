@@ -130,7 +130,7 @@ public class HeapFile implements DbFile {
     	}
     	
 		private boolean load_new_page(int pgNum) throws DbException, TransactionAbortedException {
-	    	HeapPageId pid = new HeapPageId(hf.getId(), p++);
+			HeapPageId pid = new HeapPageId(hf.getId(), p++);
 			try {
 				HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, pid, null);
 				tuples = new ArrayList<Tuple>();
@@ -161,11 +161,13 @@ public class HeapFile implements DbFile {
 			if (i < tuples.size()) {
 				return true;
 			}
-			load_new_page(p);
+			if (!load_new_page(p)) {
+				System.out.print("out of pages!!!!!!!!");
+				return false;
+			}
 			while(tuples.size() == 0) {
 				boolean loaded = load_new_page(p);
 				if (!loaded) {
-					System.out.println("no more pages!");
 					return false;
 				}
 			}
