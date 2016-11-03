@@ -11,6 +11,14 @@ public class SeqScan implements DbIterator {
 
     private static final long serialVersionUID = 1L;
 
+    //These are the variables that I implemented:
+    int tableid; //tableid
+    TransactionId tid;
+    String tableAlias;
+    DbFile file; //Database file we'll need to pull the tables from
+    Catalog catalog; //Catalog to pull the table information from
+    boolean open = false;
+    /////
     /**
      * Creates a sequential scan over the specified table as a part of the
      * specified transaction.
@@ -28,16 +36,27 @@ public class SeqScan implements DbIterator {
      *            tableAlias.null, or null.null).
      */
     public SeqScan(TransactionId tid, int tableid, String tableAlias) {
-        // some code goes here
+        this.tid = tid;
+        this.tableid = tableid;
+        this.tableAlias = tableAlias;
+        //Get the database file we'll need to use for later from the catalog
+        catalog = Database.getCatalog(); 
+        file = catalog.getDatabaseFile(tableid);
+        
     }
-
+    
+    //This was already implemented in the skeleton code
+    public SeqScan(TransactionId tid, int tableid) {
+        this(tid, tableid, Database.getCatalog().getTableName(tableid));
+    }
     /**
      * @return
      *       return the table name of the table the operator scans. This should
      *       be the actual name of the table in the catalog of the database
      * */
     public String getTableName() {
-        return null;
+    	//look up the name from the catalog with the table id
+        return Database.getCatalog().getTableName(tableid);
     }
     
     /**
@@ -45,8 +64,11 @@ public class SeqScan implements DbIterator {
      * */
     public String getAlias()
     {
-        // some code goes here
-        return null;
+    	//As the constructor states, if alias is null, return the string "null"
+    	if(tableAlias.equals(null))
+    		return "null";
+    	else
+    		return tableAlias;
     }
 
     /**
@@ -62,15 +84,14 @@ public class SeqScan implements DbIterator {
      *            tableAlias.null, or null.null).
      */
     public void reset(int tableid, String tableAlias) {
-        // some code goes here
+        tableid = (Integer) null;
+        tableAlias = null;
     }
 
-    public SeqScan(TransactionId tid, int tableid) {
-        this(tid, tableid, Database.getCatalog().getTableName(tableid));
-    }
+
 
     public void open() throws DbException, TransactionAbortedException {
-        // some code goes here
+        open = true;
     }
 
     /**
@@ -99,7 +120,7 @@ public class SeqScan implements DbIterator {
     }
 
     public void close() {
-        // some code goes here
+        open = false;
     }
 
     public void rewind() throws DbException, NoSuchElementException,
