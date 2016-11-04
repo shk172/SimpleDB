@@ -137,14 +137,14 @@ public class HeapFile implements DbFile {
 			//this will succeed because its in buffer
 			try {
 				HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, pid, null);
-				System.out.println("number of tuples in file: " + (page.numSlots - page.getNumEmptySlots()));
+				//System.out.println("number of tuples in file: " + (page.numSlots - page.getNumEmptySlots()));
 				tuples = new ArrayList<Tuple>();
 				Iterator<Tuple> pi = page.iterator();
 				
 				while (pi.hasNext()) {
 					tuples.add(pi.next());
 				}
-				System.out.println("Size of tuples: " + tuples.size());
+				//System.out.println("Size of tuples: " + tuples.size());
 				i = 0;
 				return true;
 			} catch (DbException e) {

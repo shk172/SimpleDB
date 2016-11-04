@@ -104,7 +104,9 @@ public class SystemTestUtil {
     public static void matchTuples(DbFile f, TransactionId tid, List<ArrayList<Integer>> tuples)
             throws DbException, TransactionAbortedException, IOException {
         SeqScan scan = new SeqScan(tid, f.getId(), "");
+        System.out.println("debugging" + tuples);
         matchTuples(scan, tuples);
+        
     }
 
     public static void matchTuples(DbIterator iterator, List<ArrayList<Integer>> tuples)
@@ -122,6 +124,7 @@ public class SystemTestUtil {
         while (iterator.hasNext()) {
             Tuple t = iterator.next();
             ArrayList<Integer> list = tupleToList(t);
+            System.out.print("test " + t);
             boolean isExpected = copy.remove(list);
             Debug.log("scanned tuple: %s (%s)", t, isExpected ? "expected" : "not expected");
             if (!isExpected) {
