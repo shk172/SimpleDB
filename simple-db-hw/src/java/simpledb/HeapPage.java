@@ -68,7 +68,8 @@ public class HeapPage implements Page {
     /** Retrieve the number of tuples on this page.
         @return the number of tuples on this page
     */
-    private int getNumTuples() {   
+    private int getNumTuples() {  
+    	// return the size of a page divide by the size of an entry, floored
         return BufferPool.getPageSize()*8 /  (td.getSize() * 8 + 1);
     }
 
@@ -76,7 +77,8 @@ public class HeapPage implements Page {
      * Computes the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      * @return the number of bytes in the header of a page in a HeapFile with each tuple occupying tupleSize bytes
      */
-    private int getHeaderSize() {        
+    private int getHeaderSize() {   
+    	// return the number of tuples and divide by bits/byte to get needed bytes
         return (int) Math.ceil(getNumTuples()/(float) 8);        
     }
     
@@ -280,7 +282,8 @@ public class HeapPage implements Page {
     public int getNumEmptySlots() {
     	int sum = 0;
     	for (byte b : header) {
-    		sum +=  8 - Integer.bitCount(b & 0xff); // number of total bits minus number of 1s
+    		// for each byte, get the number of 0 bits
+    		sum +=  8 - Integer.bitCount(b & 0xff);
     	}
     	return sum;
     }
@@ -289,9 +292,13 @@ public class HeapPage implements Page {
      * Returns true if associated slot on this page is filled.
      */
     public boolean isSlotUsed(int i) {
+    	
+    	//  the byte containing the ith header bit
         int header_byte = i / 8;
+        // the i bit in the header[head_byte] byte
         int header_bit = i % 8;
     	
+        // if the i header bit is 1 return true, else (bit == 0) false
     	int used = (header[header_byte] >> header_bit) & 1;
 
     	return (used == 1) ? true:false;
@@ -301,7 +308,10 @@ public class HeapPage implements Page {
      * Abstraction to fill or clear a slot on this page.
      */
     private void markSlotUsed(int i, boolean value) {
-        int header_byte = i / 8; 
+    	
+    	//  the byte containing the ith header bit
+        int header_byte = i / 8;
+        // the i bit in the header[head_byte] byte
         int header_bit = i % 8;
   
     	// xor flips the bit- if was in use now empty, and visa versa
@@ -316,21 +326,17 @@ public class HeapPage implements Page {
     public Iterator<Tuple> iterator() {
 		  Iterator<Tuple> it = new Iterator<Tuple>() {
 			  int i = 0;
-			  int j = 0;
 		        
 			  public boolean hasNext(){
-				  if (numSlots - getNumEmptySlots() == j) {
-					  return false;
-				  }
+				  // if the slot isn't used, skip it
 				  while (i < tuples.length && !isSlotUsed(i)) {
-					  
 					  i++;
 				  }
+				  // if there were no more usable tuples false, else true
 				  return i < tuples.length;
 			  }
 			  
 			  public Tuple next(){
-				  j++;
 				  return tuples[i++];
 			  }
 		  };

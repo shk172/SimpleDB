@@ -51,15 +51,21 @@ public class RecordId implements Serializable {
      */
     @Override
     public boolean equals(Object o) {
+    	
+    	// if o is not a RecordId return false
         if (!(o instanceof RecordId)) {
         	return false;
         }
+        
+        // if the PageId or RecordID are different return false
         if (!(pageID.equals(((RecordId) o).getPageId()))) {
         	return false;
         }
         if(tupleNum != ((RecordId) o).tupleno()){
         	return false;
         }
+        
+        // else
         return true;
     }
 

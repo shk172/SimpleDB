@@ -26,14 +26,14 @@ public class Catalog {
 		
 		int tableID;
 		String name;
-		TupleDesc tupleDescription;
+		TupleDesc td;
 		DbFile dbFile;
 		String pKey;
 		
 		Table(DbFile file, String name, String pkey){
 			this.tableID = file.getId();
 			this.name = name;
-			this.tupleDescription = file.getTupleDesc();
+			this.td = file.getTupleDesc();
 			this.dbFile = file;
 			this.pKey = pkey;
 		}
@@ -41,14 +41,13 @@ public class Catalog {
 		Table(DbFile file, String name){
 			this.tableID = file.getId();
 			this.name = name;
-			this.tupleDescription = file.getTupleDesc();
+			this.td = file.getTupleDesc();
 			this.dbFile = file;
 			this.pKey = "";
 		}
 	}
 	
-	//Dictionary with table ID from DbFile.getId as the key and
-	//the table as value
+	//Maps of tables in the catalog by id and name
 	Map<Integer, Table> tablesById;
 	Map<String, Table> tablesByName;
 	
@@ -59,9 +58,10 @@ public class Catalog {
      * Creates a new, empty catalog.
      */
     public Catalog() {
-    	//Initializes the hashtable
-    	tablesById = new HashMap<Integer, Table>();
-    	tablesByName = new HashMap<String, Table>();
+    	
+    	//Initializes the hashtables
+    	tablesById = new ConcurrentHashMap<Integer, Table>();
+    	tablesByName = new ConcurrentHashMap<String, Table>();
     }
 
     /**
@@ -74,6 +74,7 @@ public class Catalog {
      * @param pkeyField the name of the primary key field
      */
     public void addTable(DbFile file, String name, String pkeyField) {
+    	
     	//Create a new table
     	Table table = new Table(file, name, pkeyField);
     	
@@ -102,10 +103,15 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public int getTableId(String name) throws NoSuchElementException {
-    	if(tablesByName.get(name) == null)
+    	
+    	// throw exception if name isn't in catalog
+    	if(name == null || tablesByName.get(name) == null) {
     		throw new NoSuchElementException("Table with the given name was not found");
-    	else
+    	}
+    	// otherwise return tableID
+    	else {
     		return tablesByName.get(name).tableID;
+    	}
     }
 
     /**
@@ -115,10 +121,15 @@ public class Catalog {
      * @throws NoSuchElementException if the table doesn't exist
      */
     public TupleDesc getTupleDesc(int tableid) throws NoSuchElementException {
-    	if(tablesById.get(tableid) == null)
+    	
+    	// throw exception if no table has that id
+    	if(tablesById.get(tableid) == null) {
     		throw new NoSuchElementException("Table with the given id was not found");
-    	else
-    		return tablesById.get(tableid).tupleDescription;
+    	}
+    	// otherwise return table description
+    	else {
+    		return tablesById.get(tableid).td;
+    	}
     }
 
     /**
@@ -128,20 +139,31 @@ public class Catalog {
      *     function passed to addTable
      */
     public DbFile getDatabaseFile(int tableid) throws NoSuchElementException {
-    	if(tablesById.get(tableid) == null)
+    	
+    	// throws exception if no table has that id
+    	if(tablesById.get(tableid) == null) {
     		throw new NoSuchElementException("Table with the given id was not found");
-    	else
+    	}
+    	// otherwise return the DbFile
+    	else {
     		return tablesById.get(tableid).dbFile;
+    	}
     }
 
     public String getPrimaryKey(int tableid) throws NoSuchElementException {
-    	if(tablesById.get(tableid) == null)
+    	
+    	// throws exception if no table has that id
+    	if(tablesById.get(tableid) == null) {
     		throw new NoSuchElementException("Table with the given id was not found");
-    	else
+    	}
+    	// otherwise return primary key
+    	else {
     		return tablesById.get(tableid).pKey;
+    	}
     }
 
     public Iterator<Integer> tableIdIterator() {
+    	// iterate over the keys of the ID hashmap
     	return this.tablesById.keySet().iterator();
     }
 
@@ -151,8 +173,8 @@ public class Catalog {
     
     /** Delete all tables from the catalog */
     public void clear() {
-    	this.tablesById = new HashMap<Integer, Table>();
-    	this.tablesByName = new HashMap<String, Table>();
+    	this.tablesById = new ConcurrentHashMap<Integer, Table>();
+    	this.tablesByName = new ConcurrentHashMap<String, Table>();
     }
     
     /**

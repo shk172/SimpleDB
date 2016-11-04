@@ -52,8 +52,7 @@ public class TupleDesc implements Serializable {
 
 		@Override
 		public Type getType() {
-			// TODO Auto-generated method stub
-			return null;
+			return fieldType;
 		}
     }
 
@@ -93,8 +92,11 @@ public class TupleDesc implements Serializable {
      *            be null.
      */
     public TupleDesc(Type[] typeAr, String[] fieldAr){
+    	
+    	// initialize fields
     	fields = new TDItem[typeAr.length];
     	for (int i = 0; i < typeAr.length; i++) {
+    		// fill it up
     		fields[i] = new TDItem(typeAr[i], fieldAr[i]);
     	}
     		

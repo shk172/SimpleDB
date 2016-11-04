@@ -55,15 +55,21 @@ public class HeapPageId implements PageId {
      *   ids are the same)
      */
     public boolean equals(Object o) {
+    	
+    	// if it isnt a HeapPageId return false
         if (!(o instanceof PageId)) {
         	return false;
         }
+        
+        // if the TableId or PageNumber are different return false
         if (tableID != ((PageId) o).getTableId()) {
         	return false;
         }
         if(pageNum != ((PageId) o).pageNumber()){
         	return false;
         }
+        
+        // else
         return true;
     }
 

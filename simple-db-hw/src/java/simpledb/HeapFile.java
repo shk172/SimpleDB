@@ -18,6 +18,7 @@ public class HeapFile implements DbFile {
 	TupleDesc td;
 	File file;
 	int id;
+	
     /**
      * Constructs a heap file backed by the specified file.
      * 
@@ -66,14 +67,15 @@ public class HeapFile implements DbFile {
     public Page readPage(PageId pid) {
     	
     	Database.getBufferPool();
-    	
     	int totalPages = ((int) file.length()) / BufferPool.getPageSize();
-    	    	if (pid.pageNumber() >= totalPages) {
-    		//System.out.println("table number too high");
+    	byte page[] = new byte[BufferPool.getPageSize()];
+    	
+    	// if the pid's page number exceeds the pages in the file return exception
+    	if (pid.pageNumber() >= totalPages) {
     		throw new IllegalArgumentException("table number too high");
     	}
-    	int page_num = pid.pageNumber();
-    	byte page[] = new byte[BufferPool.getPageSize()];
+    	
+    	// try to read the page from the file and return it in a HeapPage
     	try {
 			RandomAccessFile raf = new RandomAccessFile(file, "r");
 			raf.read(page);
@@ -82,7 +84,7 @@ public class HeapFile implements DbFile {
 		} catch (FileNotFoundException e) {
 			throw new IllegalArgumentException("file not found");
 		} catch (IOException i) {
-			throw new IllegalArgumentException("page " + page_num + " not found");
+			throw new IllegalArgumentException("page number out of bounds");
 	}
 		
     }
@@ -133,45 +135,58 @@ public class HeapFile implements DbFile {
     	}
     	
 		private boolean loadNewPage(int pgNum) throws DbException, TransactionAbortedException {
+			
+			// create a PageID for the new pages of the file to be loaded
 			HeapPageId pid = new HeapPageId(hf.getId(), p);
-			//this will succeed because its in buffer
+			
 			try {
+				// get the page from the BufferPool and initialize tuples
 				HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, pid, null);
-				//System.out.println("number of tuples in file: " + (page.numSlots - page.getNumEmptySlots()));
 				tuples = new ArrayList<Tuple>();
-				Iterator<Tuple> pi = page.iterator();
 				
+				// add all tuples on page to tuples List
+				Iterator<Tuple> pi = page.iterator();
 				while (pi.hasNext()) {
 					tuples.add(pi.next());
 				}
-				//System.out.println("Size of tuples: " + tuples.size());
+				
+				//reset i and return true to indicate a page has been loaded
 				i = 0;
 				return true;
 			} catch (DbException e) {
+				// if the page doesn't exist throw an exception
 				return false;
 			}
 		}
 		
 		@Override
 		public void open() throws DbException, TransactionAbortedException {
+			// load the first page  and flip the open boolean
 			loadNewPage(p);
 			open = true;
 		}
 		
 		@Override
 		public boolean hasNext() throws DbException, TransactionAbortedException {
+			
+			// return false if the iterator hasn't been opened
 			if (!open) {
 				return false;
 			}
+			
+			// if there's tuples in the current page left return true
 			if (i < tuples.size()) {
 				return true;
 			}
+			
+			// if you can't load another page return false
 			if (!loadNewPage(++p)) {
 				return false;
 			}
+			
+			// if this page is empty check the next one, etc
 			while(tuples.size() == 0) {
-				boolean loaded = loadNewPage(++p);
-				if (!loaded) {
+				if (!loadNewPage(++p)) {
 					return false;
 				}
 			}
@@ -181,16 +196,20 @@ public class HeapFile implements DbFile {
 
 		@Override
 		public Tuple next() throws DbException, TransactionAbortedException, NoSuchElementException {
+			
+			// if the iterator isn't open throw exception
 			if (!open) {
 				throw new NoSuchElementException();
 			}
 			
+			// return the next element of tuples and increment i
 			return tuples.get(i++);
 
 		}
 
 		@Override
 		public void rewind() throws DbException, TransactionAbortedException {
+			// reset iterator variables and load first page
 			p = 0;
 			i = 0;
 			loadNewPage(p);

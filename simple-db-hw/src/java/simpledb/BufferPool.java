@@ -1,7 +1,6 @@
 package simpledb;
 
 import java.io.*;
-import java.util.ArrayList;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.Iterator;
 
@@ -23,7 +22,6 @@ public class BufferPool {
 
     private static int pageSize = PAGE_SIZE;
     private int numPages;
-    private int pageCount;
     
     private java.util.concurrent.ConcurrentHashMap<Integer, Page> pageBuf;
     
@@ -38,9 +36,8 @@ public class BufferPool {
      * @param numPages maximum number of pages in this buffer pool.
      */
     public BufferPool(int numPages) {
-    	this.pageBuf = new java.util.concurrent.ConcurrentHashMap<Integer, Page>();
+    	this.pageBuf = new ConcurrentHashMap<Integer, Page>();
         this.numPages = numPages;
-        this.pageCount = 0;
     }
     
     public static int getPageSize() {
@@ -74,25 +71,24 @@ public class BufferPool {
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
+    	
+    	// look for the page in the buffer
     	Page buffPage = pageBuf.get(pid.hashCode());
-    	//this comparison is matching on things it shoulddn't (ie different pids with different page numbers)
-//		if (buffPage != null) {
-//			System.out.println("Reading from buffer: " + pid.hashCode());
-//			return buffPage;
-//		}
+		if (buffPage != null) {
+			System.out.println("Reading from buffer: " + pid.hashCode());
+			return buffPage;
+		}
 
-        if (pageCount == numPages) {
-        	// if the buffer is full panic
+		// if the buffer is full panic
+        if (pageBuf.size() == numPages) {
         	throw new TransactionAbortedException();
-        }
-
-        Page ret = null; // initialize a return values outside loop
+        }   
         
+        // load the page from file
 		try {
 			DbFile dbFile = Database.getCatalog().getDatabaseFile(pid.getTableId());
-			ret = dbFile.readPage(pid);
+			Page ret = dbFile.readPage(pid);
     		pageBuf.put(pid.hashCode(), ret);
-    		pageCount++;
     		return ret;
 		} catch(IllegalArgumentException e) {
 			throw new DbException("pid not in db");

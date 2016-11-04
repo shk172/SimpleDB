@@ -15,7 +15,7 @@ public class Tuple implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    private TupleDesc tupleDescription; // TODO make a pointer
+    private TupleDesc tupleDescription; // TODO make a pointer?
     private Field[] fieldArray;
     private RecordId rid;
     /**
@@ -37,7 +37,11 @@ public class Tuple implements Serializable {
     	//it in the array of fields in the tuples.
     	fieldArray = new Field[td.numFields()];
     	for(int i = 0; i < td.numFields(); i++){
-    		fieldArray[i] = it.next();
+    		// make sure there's another tuple
+    		if (it.hasNext()) {
+    			// add it to the fieldArray
+    			fieldArray[i] = it.next();
+    		}
     	}
     }
 
@@ -140,7 +144,9 @@ public class Tuple implements Serializable {
     	//it in the array of fields in the tuples.
     	fieldArray = new Field[td.numFields()];
     	for(int i = 0; i < td.numFields(); i++){
-    		fieldArray[i] = it.next();
+    		if (it.hasNext()) {
+    			fieldArray[i] = it.next();
+    		}
     	}
     }
 }
