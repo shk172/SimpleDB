@@ -74,11 +74,12 @@ public class BufferPool {
      */
     public Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
-    	System.out.println(pid.getTableId() + pid.pageNumber());	
-    	Page buffPage = pageBuf.get(pid.hashCode());	
-    		if (buffPage != null) {
-    			return buffPage;
-    		}
+    	Page buffPage = pageBuf.get(pid.hashCode());
+    	//this comparison is matching on things it shoulddn't (ie different pids with different page numbers)
+//		if (buffPage != null) {
+//			System.out.println("Reading from buffer: " + pid.hashCode());
+//			return buffPage;
+//		}
 
         if (pageCount == numPages) {
         	// if the buffer is full panic
@@ -86,26 +87,17 @@ public class BufferPool {
         }
 
         Page ret = null; // initialize a return values outside loop
-        Iterator<Integer> tablesIter = Database.getCatalog().tableIdIterator();
-        int curr;
-        DbFile dbFile;
-        int j = 0;
-        while (tablesIter.hasNext()) { // go through all tables ids in the catalog 
-        	curr = tablesIter.next();
-        	dbFile = Database.getCatalog().getDatabaseFile(curr); // get the DbFile
-        	// if you have the pid return it  
-        		try {
-        			ret = dbFile.readPage(pid);
-	        		pageBuf.put(pid.hashCode(), ret);
-	        		pageCount++;
-	        		return ret;
-        		} catch(IllegalArgumentException e) {
-        			System.out.println(pid.pageNumber() + " : " + e.getMessage());
-        			continue;
-        		}
-        }
-        throw new DbException("pid not in database");
         
+		try {
+			DbFile dbFile = Database.getCatalog().getDatabaseFile(pid.getTableId());
+			ret = dbFile.readPage(pid);
+    		pageBuf.put(pid.hashCode(), ret);
+    		pageCount++;
+    		return ret;
+		} catch(IllegalArgumentException e) {
+			throw new DbException("pid not in db");
+			}
+
     }
 
     /**

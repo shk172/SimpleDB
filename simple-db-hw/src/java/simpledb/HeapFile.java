@@ -68,7 +68,8 @@ public class HeapFile implements DbFile {
     	Database.getBufferPool();
     	
     	int totalPages = ((int) file.length()) / BufferPool.getPageSize();
-    	if (pid.pageNumber() >= totalPages) {
+    	    	if (pid.pageNumber() >= totalPages) {
+    		//System.out.println("table number too high");
     		throw new IllegalArgumentException("table number too high");
     	}
     	int page_num = pid.pageNumber();
@@ -127,29 +128,33 @@ public class HeapFile implements DbFile {
     	public HeapFileIterator(TransactionId tid, HeapFile hf) {
     		this.tid = tid;
     		this.hf = hf;
+    		i = 0;
+    		p = 0;
     	}
     	
-		private boolean load_new_page(int pgNum) throws DbException, TransactionAbortedException {
-			HeapPageId pid = new HeapPageId(hf.getId(), p++);
+		private boolean loadNewPage(int pgNum) throws DbException, TransactionAbortedException {
+			HeapPageId pid = new HeapPageId(hf.getId(), p);
+			//this will succeed because its in buffer
 			try {
-				HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, pid, null);
+				HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, pid, null);
+				System.out.println("number of tuples in file: " + (page.numSlots - page.getNumEmptySlots()));
 				tuples = new ArrayList<Tuple>();
+				Iterator<Tuple> pi = page.iterator();
 				
-				Iterator<Tuple> pi = p.iterator();
 				while (pi.hasNext()) {
 					tuples.add(pi.next());
 				}
+				System.out.println("Size of tuples: " + tuples.size());
 				i = 0;
 				return true;
 			} catch (DbException e) {
 				return false;
 			}
 		}
+		
 		@Override
 		public void open() throws DbException, TransactionAbortedException {
-			i = 0;
-			p = 0;
-			load_new_page(p);
+			loadNewPage(p);
 			open = true;
 		}
 		
@@ -161,12 +166,11 @@ public class HeapFile implements DbFile {
 			if (i < tuples.size()) {
 				return true;
 			}
-			if (!load_new_page(p)) {
-				System.out.print("out of pages!!!!!!!!");
+			if (!loadNewPage(++p)) {
 				return false;
 			}
 			while(tuples.size() == 0) {
-				boolean loaded = load_new_page(p);
+				boolean loaded = loadNewPage(++p);
 				if (!loaded) {
 					return false;
 				}
@@ -180,7 +184,7 @@ public class HeapFile implements DbFile {
 			if (!open) {
 				throw new NoSuchElementException();
 			}
-
+			
 			return tuples.get(i++);
 
 		}
@@ -189,7 +193,7 @@ public class HeapFile implements DbFile {
 		public void rewind() throws DbException, TransactionAbortedException {
 			p = 0;
 			i = 0;
-			load_new_page(p);
+			loadNewPage(p);
 		}
 
 		@Override

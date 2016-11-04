@@ -11,7 +11,7 @@ public class HeapPageId implements PageId {
      * @param pgNo The page number in that table.
      */
 	
-	int tableID;
+	int tableID = 0;
 	int pageNum;
 	
     public HeapPageId(int tableId, int pgNo) {
@@ -43,7 +43,7 @@ public class HeapPageId implements PageId {
     	// the tableID and pageNum, combined by adding the two as strings and 
     	// converting back to int.
     	String stringHash = Integer.toString(tableID) + Integer.toString(pageNum);
-    	int integerHash = Integer.parseInt(stringHash);
+    	int integerHash = stringHash.hashCode(); 
     	return integerHash;
     }
 

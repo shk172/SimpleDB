@@ -69,7 +69,7 @@ public class HeapPage implements Page {
         @return the number of tuples on this page
     */
     private int getNumTuples() {   
-        return (int) Math.floor(BufferPool.getPageSize()*8 / (float) (td.getSize() * 8 + 1));
+        return BufferPool.getPageSize()*8 /  (td.getSize() * 8 + 1);
     }
 
 	/**
@@ -316,14 +316,21 @@ public class HeapPage implements Page {
     public Iterator<Tuple> iterator() {
 		  Iterator<Tuple> it = new Iterator<Tuple>() {
 			  int i = 0;
+			  int j = 0;
+		        
 			  public boolean hasNext(){
+				  if (numSlots - getNumEmptySlots() == j) {
+					  return false;
+				  }
 				  while (i < tuples.length && !isSlotUsed(i)) {
+					  
 					  i++;
 				  }
 				  return i < tuples.length;
 			  }
 			  
 			  public Tuple next(){
+				  j++;
 				  return tuples[i++];
 			  }
 		  };
