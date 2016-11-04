@@ -15,9 +15,13 @@ public class SeqScan implements DbIterator {
     int tableid; //tableid
     TransactionId tid;
     String tableAlias;
-    DbFile file; //Database file we'll need to pull the tables from
+    HeapFile file; //Database file we'll need to pull the tables from
     Catalog catalog; //Catalog to pull the table information from
     boolean open = false;
+    
+    ArrayList<Tuple> tuples;
+	int i;
+	int p;
     /////
     /**
      * Creates a sequential scan over the specified table as a part of the
@@ -41,7 +45,7 @@ public class SeqScan implements DbIterator {
         this.tableAlias = tableAlias;
         //Get the database file we'll need to use for later from the catalog
         catalog = Database.getCatalog(); 
-        file = catalog.getDatabaseFile(tableid);
+        file = (HeapFile) catalog.getDatabaseFile(tableid);
         
     }
     
@@ -104,20 +108,53 @@ public class SeqScan implements DbIterator {
      *         prefixed with the tableAlias string from the constructor.
      */
     public TupleDesc getTupleDesc() {
-        // some code goes here
-        return null;
+        TupleDesc tupleDesc = file.getTupleDesc();
+        
+        //make a new TupleDesc with field names that have alias as prefix
+        Type[] typeArray = new Type[tupleDesc.numFields()];
+        String[] fieldArray = new String[tupleDesc.numFields()];
+       
+        for(int i = 0; i < tupleDesc.numFields(); i++){
+        	typeArray[i] = tupleDesc.getFieldType(i);
+        	
+        	//Use StringBuilder to combine tableAlias and fieldName together
+        	StringBuilder fieldNameBuilder = new StringBuilder();
+        	fieldNameBuilder.append(tableAlias);
+        	fieldNameBuilder.append(tupleDesc.getFieldName(i));
+        	
+        	//Then pass the new string to the field array
+        	fieldArray[i] = fieldNameBuilder.toString();
+        }
+        TupleDesc newTupleDesc = new TupleDesc(typeArray, fieldArray);
+        return newTupleDesc;
     }
 
     public boolean hasNext() throws TransactionAbortedException, DbException {
-        // some code goes here
-        return false;
-    }
+		if (!open) {
+			return false;
+		}
+		if (i + 1 < tuples.size()) {
+			return true;
+		}
+		while(tuples.size() == 0 || i + 1 >= tuples.size()) {
+			boolean loaded = load_new_page(p);
+			if (!loaded) {
+				System.out.println("no more pages!");
+				return false;
+			}
+		}
+		return true;
+	}
 
     public Tuple next() throws NoSuchElementException,
             TransactionAbortedException, DbException {
-        // some code goes here
-        return null;
-    }
+		if (!open) {
+			throw new NoSuchElementException();
+		}
+		i++;
+		return tuples.get(i);
+
+	}
 
     public void close() {
         open = false;
@@ -125,6 +162,26 @@ public class SeqScan implements DbIterator {
 
     public void rewind() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-        // some code goes here
-    }
+		p = 0;
+		i = 0;
+		load_new_page(p);
+	}
+    
+	private boolean load_new_page(int pgNum) throws DbException, TransactionAbortedException {
+    	HeapPageId pid = new HeapPageId(file.getId(), p++);
+		try {
+			HeapPage p = (HeapPage) Database.getBufferPool().getPage(tid, pid, null);
+			tuples = new ArrayList<Tuple>();
+			
+			Iterator<Tuple> pi = p.iterator();
+			while (pi.hasNext()) {
+				tuples.add(pi.next());
+			}
+			i = 0;
+			return true;
+		} catch (DbException e) {
+			return false;
+		}
+	}
 }
+
