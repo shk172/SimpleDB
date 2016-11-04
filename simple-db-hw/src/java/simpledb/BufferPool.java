@@ -2,7 +2,9 @@ package simpledb;
 
 import java.io.*;
 import java.util.ArrayList;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.Iterator;
+
 
 /**
  * BufferPool manages the reading and writing of pages into memory from
@@ -20,10 +22,10 @@ public class BufferPool {
     private static final int PAGE_SIZE = 4096;
 
     private static int pageSize = PAGE_SIZE;
-    private int maxPages;
     private int numPages;
+    private int pageCount;
     
-    private ArrayList<Page> pageArray = new ArrayList<Page>();
+    private java.util.concurrent.ConcurrentHashMap<Integer, Page> pageBuf;
     
     /** Default number of pages passed to the constructor. This is used by
     other classes. BufferPool should use the numPages argument to the
@@ -36,7 +38,9 @@ public class BufferPool {
      * @param numPages maximum number of pages in this buffer pool.
      */
     public BufferPool(int numPages) {
-        this.maxPages = numPages;
+    	this.pageBuf = new java.util.concurrent.ConcurrentHashMap<Integer, Page>();
+        this.numPages = numPages;
+        this.pageCount = 0;
     }
     
     public static int getPageSize() {
@@ -68,33 +72,32 @@ public class BufferPool {
      * @param pid the ID of the requested page
      * @param perm the requested permissions on the page
      */
-    public  Page getPage(TransactionId tid, PageId pid, Permissions perm)
+    public Page getPage(TransactionId tid, PageId pid, Permissions perm)
         throws TransactionAbortedException, DbException {
-        for (Page page : pageArray) {
-        	if (page.getId() == pid) {
-        		return page;
-        	}
-        }
-        if (numPages == maxPages) {
+    	Page buffPage = pageBuf.get(pid.hashCode());
+    	//this comparison is matching on things it shoulddn't (ie different pids with different page numbers)
+//		if (buffPage != null) {
+//			System.out.println("Reading from buffer: " + pid.hashCode());
+//			return buffPage;
+//		}
+
+        if (pageCount == numPages) {
+        	// if the buffer is full panic
         	throw new TransactionAbortedException();
         }
-        //TODO load page out of memory
-        // this needs to iterate through some DbFiles but im not sure where those files are 
-        Page ret = null;
-        Iterator<Integer> tablesIter = Database.getCatalog().tableIdIterator();
-        Integer curr = tablesIter.next();
-        while (tablesIter.hasNext()) {
-        	DbFile dbFile = Database.getCatalog().getDatabaseFile(curr);
-        	try {
-        		ret = dbFile.readPage(pid);
-        		return ret;
-        	}
-        	finally {
-        		curr = tablesIter.next();
-        	}
-        }
-        return ret;
+
+        Page ret = null; // initialize a return values outside loop
         
+		try {
+			DbFile dbFile = Database.getCatalog().getDatabaseFile(pid.getTableId());
+			ret = dbFile.readPage(pid);
+    		pageBuf.put(pid.hashCode(), ret);
+    		pageCount++;
+    		return ret;
+		} catch(IllegalArgumentException e) {
+			throw new DbException("pid not in db");
+			}
+
     }
 
     /**

@@ -86,13 +86,14 @@ public class HeapPageReadTest extends SimpleDbTestBase {
     @Test public void testIterator() throws Exception {
         HeapPage page = new HeapPage(pid, EXAMPLE_DATA);
         Iterator<Tuple> it = page.iterator();
-
         int row = 0;
         while (it.hasNext()) {
             Tuple tup = it.next();
             IntField f0 = (IntField) tup.getField(0);
             IntField f1 = (IntField) tup.getField(1);
-
+            
+            System.out.println();
+            
             assertEquals(EXAMPLE_VALUES[row][0], f0.getValue());
             assertEquals(EXAMPLE_VALUES[row][1], f1.getValue());
             row++;
