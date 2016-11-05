@@ -75,7 +75,6 @@ public class BufferPool {
     	// look for the page in the buffer
     	Page buffPage = pageBuf.get(pid.hashCode());
 		if (buffPage != null) {
-			System.out.println("Reading from buffer: " + pid.hashCode());
 			return buffPage;
 		}
 

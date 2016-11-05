@@ -11,13 +11,17 @@ public class SeqScan implements DbIterator {
 
     private static final long serialVersionUID = 1L;
 
-    //These are the variables that I implemented:
-    int tableid;
-    TransactionId tid;
-    String tableAlias;
-    DbFile file; //Database file we'll need to pull the tables from
-    Catalog catalog; //Catalog to pull the table information from
-
+    int tableid;				//Given table ID
+    TransactionId tid;			//Given transaction ID
+    String tableAlias;			//Given table alias
+    DbFile file; 				//Database file we'll need to pull the tables from
+    Catalog catalog; 			//Catalog to pull the table information from
+    DbFileIterator iterator; 	//The iterator that we implemented in HeapFile class - we can use it directly from here
+    
+    //Global variables for the iterator
+    boolean open = false;		//Boolean to check whether the iterator is open or not
+    ArrayList<Tuple> tuples;	//Collection of tuples that we will be keeping up while going through the pages
+	int pgNum;					//Current Page Number
     /////
     /**
      * Creates a sequential scan over the specified table as a part of the
@@ -39,9 +43,11 @@ public class SeqScan implements DbIterator {
         this.tid = tid;
         this.tableid = tableid;
         this.tableAlias = tableAlias;
+        
         //Get the database file we'll need to use for later from the catalog
         catalog = Database.getCatalog(); 
         file = catalog.getDatabaseFile(tableid);
+        iterator = file.iterator(tid);
         
     }
     
@@ -84,6 +90,7 @@ public class SeqScan implements DbIterator {
      *            tableAlias.null, or null.null).
      */
     public void reset(int tableid, String tableAlias) {
+    	//Reset the table ID and tableAlias to null, as they were before.
         tableid = (Integer) null;
         tableAlias = null;
     }
@@ -123,75 +130,30 @@ public class SeqScan implements DbIterator {
         return newTupleDesc;
     }
     
-    boolean open = false;
-    ArrayList<Tuple> tuples;
-	int i;
-	int p;
+
     
     public void open() throws DbException, TransactionAbortedException {
-    	loadNewPage(p);
-        open = true;
+    	iterator.open();
     }
     
     public boolean hasNext() throws TransactionAbortedException, DbException {
-		if (!open) {
-			return false;
-		}
-		if (i < tuples.size()) {
-			return true;
-		}
-		if (!loadNewPage(++p)) {
-			return false;
-		}
-		while(tuples.size() == 0) {
-			boolean loaded = loadNewPage(++p);
-			if (!loaded) {
-				return false;
-			}
-		}
-		return true;
+		return iterator.hasNext();
 	}
 
     public Tuple next() throws NoSuchElementException,
             TransactionAbortedException, DbException {
-		if (!open) {
-			throw new NoSuchElementException();
-		}
-		
-		return tuples.get(i++);
-
+		return iterator.next();
 	}
 	
 
     public void close() {
-        open = false;
+        iterator.close();
     }
 
     public void rewind() throws DbException, NoSuchElementException,
             TransactionAbortedException {
-		p = 0;
-		i = 0;
-		loadNewPage(p);
+		iterator.rewind();
 	}
-    
-    private boolean loadNewPage(int pgNum) throws DbException, TransactionAbortedException {
-		HeapPageId pid = new HeapPageId(tableid, p);
-		//this will succeed because its in buffer
-		try {
-			HeapPage page = (HeapPage) Database.getBufferPool().getPage(tid, pid, null);
-			//System.out.println("number of tuples in file: " + (page.numSlots - page.getNumEmptySlots()));
-			tuples = new ArrayList<Tuple>();
-			Iterator<Tuple> pi = page.iterator();
-			
-			while (pi.hasNext()) {
-				tuples.add(pi.next());
-			}
-			//System.out.println("Size of tuples: " + tuples.size());
-			i = 0;
-			return true;
-		} catch (DbException e) {
-			return false;
-		}
-	}
+
 }
 
