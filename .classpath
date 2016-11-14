@@ -5,5 +5,7 @@
 	<classpathentry kind="lib" path="simple-db-hw/lib/ant-contrib-1.0b3.jar"/>
 	<classpathentry kind="lib" path="simple-db-hw/lib/junit-4.5.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
+	<classpathentry kind="lib" path="simple-db-hw/lib/jline-0.9.94.jar"/>
+	<classpathentry kind="lib" path="simple-db-hw/lib/zql.jar"/>
 	<classpathentry kind="output" path="simple-db-hw/bin"/>
 </classpath>
