@@ -216,13 +216,13 @@ public class BTreeFile implements DbFile {
 		
 		BTreeEntry nextEntry = _bPageIterator.next();
 		//If f is not null, with each iteration, compare the Field f with the key.
-		while(_bPageIterator.hasNext()){
+		while(true){
 			
 			if(nextEntry.getKey().compare(Op.GREATER_THAN_OR_EQ, f)){
 				_leftChildPage = findLeafPage(tid, dirtypages, nextEntry.getLeftChild(), perm, f);
 				return _leftChildPage;
 			}
-			else if(_bPageIterator.hasNext()){
+			if(_bPageIterator.hasNext()){
 				nextEntry = _bPageIterator.next();
 			}	
 			else break;
