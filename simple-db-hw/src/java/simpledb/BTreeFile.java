@@ -277,7 +277,6 @@ public class BTreeFile implements DbFile {
 		//Make two leaf pages to put the date in; the new left sibling will have the first half,
 		//and the new right sibling will have the last half. We then update the pointer so that
 		//the new pages will point at each other as well.
-		BTreeLeafPage _newLeftPage = (BTreeLeafPage) getEmptyPage(tid, dirtypages, BTreePageId.LEAF);
 		BTreeLeafPage _newRightPage = (BTreeLeafPage) getEmptyPage(tid, dirtypages, BTreePageId.LEAF);
 		
 		//numTuples will be used to count up to the halfway mark of the tuples.
@@ -287,33 +286,30 @@ public class BTreeFile implements DbFile {
 		
 		// do we need to sort?
 		Iterator<Tuple> _leafIterator = page.iterator();
-		while(_leafIterator.hasNext() && _counter < _numTuples){
+		while(_leafIterator.hasNext() && _counter < _numTuples/2){
 			Tuple tupleToAdd = _leafIterator.next();
+			
+			// do nothing to the first half of the list
 			if(_counter < _numTuples/2){
-				_newLeftPage.insertTuple(tupleToAdd);
+				continue;
 			}
-			else if (_counter == _numTuples/2){ 
-				
-				_newRightPage.insertTuple(tupleToAdd);
-			}
+			
+			//move the second half of entries to new page
+			_newRightPage.insertTuple(tupleToAdd);
+			page.deleteTuple(tupleToAdd);
+
 			_counter++;
 		}
 		
-		// link the pages to each other
-		_newLeftPage.setRightSiblingId(_newRightPage.getId());
-		_newRightPage.setLeftSiblingId(_newLeftPage.getId());
-		
-		// Set the new pages other neighbor pointer to page's neighbors
-		_newLeftPage.setLeftSiblingId(page.getLeftSiblingId());
+		// Set the new page's other neighbor pointer to page's right neighbor
 		_newRightPage.setRightSiblingId(page.getRightSiblingId());
 		
-		// Update page's old siblings' sibling pointers
-		BTreePageId lPid = _newLeftPage.getLeftSiblingId();
+		// link the pages to each other
+		page.setRightSiblingId(_newRightPage.getId());
+		_newRightPage.setLeftSiblingId(page.getId());
+
+		// Update page's old right siblings' left sibling pointer
 		BTreePageId rPid = _newRightPage.getRightSiblingId();
-		if (lPid != null) {
-			BTreeLeafPage lNeighbor = findLeafPage(tid, dirtypages, lPid, Permissions.READ_WRITE, null);
-			lNeighbor.setRightSiblingId(_newLeftPage.getId());
-		}
 		if (rPid != null) {
 			BTreeLeafPage rNeighbor = findLeafPage(tid, dirtypages, rPid, Permissions.READ_WRITE, null);
 			rNeighbor.setLeftSiblingId(_newRightPage.getId());
@@ -321,10 +317,11 @@ public class BTreeFile implements DbFile {
 		
 		// update pointers to parents
 		BTreeInternalPage _newParentPage = getParentWithEmptySlots(tid, dirtypages, page.getParentId(), _newRightPage.getTuple(0).getField(keyField()));
-		_newLeftPage.setParentId(page.getParentId());
 		_newRightPage.setParentId(_newParentPage.getId());
 		
-		//crashes here because keyfield is out of bounds
+		// do i need top update pointers from the parent node to the _newRightPage?
+		//crashes here because keyfield is 0, which apparently isn't used?
+		System.out.println(keyField());
 		if (field.compare(Op.GREATER_THAN_OR_EQ, _newParentPage.getKey(keyField()))) {
 			return _newRightPage;
 		}
