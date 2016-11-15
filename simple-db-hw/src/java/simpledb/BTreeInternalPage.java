@@ -626,7 +626,7 @@ public class BTreeInternalPage extends BTreePage {
 	protected Field getKey(int i) throws NoSuchElementException {
 
 		// key at slot 0 is not used
-		if (i < 0 || i >= keys.length)
+		if (i <= 0 || i >= keys.length)
 			throw new NoSuchElementException();
 
 		try {

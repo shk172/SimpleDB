@@ -315,18 +315,19 @@ public class BTreeFile implements DbFile {
 			rNeighbor.setLeftSiblingId(_newRightPage.getId());
 		}
 		
-		// update pointers to parents
+		// update pointers to parents - failing here since getP... calls splitInternalNode
 		BTreeInternalPage _newParentPage = getParentWithEmptySlots(tid, dirtypages, page.getParentId(), _newRightPage.getTuple(0).getField(keyField()));
 		_newRightPage.setParentId(_newParentPage.getId());
 		
-		// do i need top update pointers from the parent node to the _newRightPage?
-		//crashes here because keyfield is 0, which apparently isn't used?
-		System.out.println(keyField());
+		// do i need to update pointers from the parent node to the _newRightPage?
+		
+		// was crashing here because keyfield is 0, which apparently isn't used?, now crashes at 319
+		// System.out.println(keyField());
 		if (field.compare(Op.GREATER_THAN_OR_EQ, _newParentPage.getKey(keyField()))) {
 			return _newRightPage;
 		}
 		else {
-			return _newLeftPage;
+			return page;
 		}
 
         // Split the leaf page by adding a new page on the right of the existing
@@ -363,8 +364,48 @@ public class BTreeFile implements DbFile {
 	protected BTreeInternalPage splitInternalPage(TransactionId tid, HashMap<PageId, Page> dirtypages, 
 			BTreeInternalPage page, Field field) 
 					throws DbException, IOException, TransactionAbortedException {
-		// some code goes here
-        //
+		
+		//get an empty page 
+		BTreeInternalPage _newPage = (BTreeInternalPage) getEmptyPage(tid, dirtypages, BTreePageId.INTERNAL);
+		
+		//numTuples will be used to count up to the halfway mark of the tuples.
+		//The tuple at the halfway point will be copied up to the parent page
+		int _numEntries = page.getNumEntries();
+		int _counter = 0;
+		
+		// do we need to sort?
+		BTreeEntry pushKey = null;
+		Iterator<BTreeEntry> _leafIterator = page.iterator();
+		while(_leafIterator.hasNext() && _counter < _numEntries/2){
+			BTreeEntry entryToAdd = _leafIterator.next();
+			
+			// do nothing to the first half of the list
+			if(_counter < _numEntries/2) {
+				continue;
+			}
+			
+			// the middle entry should be pushed up, not copied
+			if (_counter == _numEntries/2) {
+				pushKey = entryToAdd;
+				continue;	
+			}
+			
+			//move the second half of entries to new page
+			// we need to do something with pointers now
+			_newPage.insertEntry(entryToAdd);
+			
+			// delete the appropriate entry and the right child from the old page
+			page.deleteKeyAndRightChild(entryToAdd);
+
+			_counter++;
+		}
+		
+		// get the new parent and update the new page's pointer 
+		BTreeInternalPage _newParent = getParentWithEmptySlots(tid, dirtypages, page.getParentId(), pushKey.getKey());
+		_newPage.setParentId(_newParent.getId());
+		Iterator<BTreeEntry> it = _newPage.iterator();
+		updateParentPointers(tid, dirtypages, pid, child);
+		
         // Split the internal page by adding a new page on the right of the existing
 		// page and moving half of the entries to the new page.  Push the middle key up
 		// into the parent page, and recursively split the parent as needed to accommodate
