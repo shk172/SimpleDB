@@ -197,6 +197,7 @@ public class BTreeFile implements DbFile {
 					throws DbException, TransactionAbortedException {
 
 		//If the pid requested is already a leaf page, fetch it from the buffer pool and return it.
+		System.out.println(pid.toString());
 		if(pid.pgcateg() == BTreePageId.LEAF){
 			return (BTreeLeafPage) this.getPage(tid, dirtypages, pid, perm);
 		}
@@ -278,40 +279,57 @@ public class BTreeFile implements DbFile {
 		//the new pages will point at each other as well.
 		BTreeLeafPage _newLeftPage = (BTreeLeafPage) getEmptyPage(tid, dirtypages, BTreePageId.LEAF);
 		BTreeLeafPage _newRightPage = (BTreeLeafPage) getEmptyPage(tid, dirtypages, BTreePageId.LEAF);
-		_newLeftPage.setRightSiblingId(_newRightPage.getId());
-		_newRightPage.setLeftSiblingId(_newLeftPage.getId());
-		
-		//Set this page's siblings to be the new pages
-		page.setLeftSiblingId(_newLeftPage.getId());
-		page.setRightSiblingId(_newRightPage.getId());
-		
-		Iterator<Tuple> _leafIterator = page.iterator();
 		
 		//numTuples will be used to count up to the halfway mark of the tuples.
 		//The tuple at the halfway point will be copied up to the parent page
 		int _numTuples = page.getNumTuples();
 		int _counter = 0;
 		
+		// do we need to sort?
+		Iterator<Tuple> _leafIterator = page.iterator();
 		while(_leafIterator.hasNext() && _counter < _numTuples){
 			Tuple tupleToAdd = _leafIterator.next();
 			if(_counter < _numTuples/2){
 				_newLeftPage.insertTuple(tupleToAdd);
 			}
-			else if (_counter > _numTuples/2){
+			else if (_counter == _numTuples/2){ 
+				
 				_newRightPage.insertTuple(tupleToAdd);
 			}
 			_counter++;
 		}
 		
-		//TODO update the parent
-		//Get the parent page
-		BTreeInternalPage _newParentPage = getParentWithEmptySlots(tid, dirtypages, page.getParentId(), field);
-		page.setParentId(_newParentPage.getId());
-		_newLeftPage.setParentId(_newParentPage.getId());
+		// link the pages to each other
+		_newLeftPage.setRightSiblingId(_newRightPage.getId());
+		_newRightPage.setLeftSiblingId(_newLeftPage.getId());
+		
+		// Set the new pages other neighbor pointer to page's neighbors
+		_newLeftPage.setLeftSiblingId(page.getLeftSiblingId());
+		_newRightPage.setRightSiblingId(page.getRightSiblingId());
+		
+		// Update page's old siblings' sibling pointers
+		BTreePageId lPid = _newLeftPage.getLeftSiblingId();
+		BTreePageId rPid = _newRightPage.getRightSiblingId();
+		if (lPid != null) {
+			BTreeLeafPage lNeighbor = findLeafPage(tid, dirtypages, lPid, Permissions.READ_WRITE, null);
+			lNeighbor.setRightSiblingId(_newLeftPage.getId());
+		}
+		if (rPid != null) {
+			BTreeLeafPage rNeighbor = findLeafPage(tid, dirtypages, rPid, Permissions.READ_WRITE, null);
+			rNeighbor.setLeftSiblingId(_newRightPage.getId());
+		}
+		
+		// update pointers to parents
+		BTreeInternalPage _newParentPage = getParentWithEmptySlots(tid, dirtypages, page.getParentId(), _newRightPage.getTuple(0).getField(keyField()));
+		_newLeftPage.setParentId(page.getParentId());
 		_newRightPage.setParentId(_newParentPage.getId());
 		
-		
-		return page;
+		if (field.compare(Op.GREATER_THAN_OR_EQ, _newParentPage.getKey(keyField()))) {
+			return _newRightPage;
+		}
+		else {
+			return _newLeftPage;
+		}
 
         // Split the leaf page by adding a new page on the right of the existing
 		// page and moving half of the tuples to the new page.  Copy the middle key up
