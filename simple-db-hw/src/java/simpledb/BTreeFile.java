@@ -324,6 +324,7 @@ public class BTreeFile implements DbFile {
 		_newLeftPage.setParentId(page.getParentId());
 		_newRightPage.setParentId(_newParentPage.getId());
 		
+		//crashes here because keyfield is out of bounds
 		if (field.compare(Op.GREATER_THAN_OR_EQ, _newParentPage.getKey(keyField()))) {
 			return _newRightPage;
 		}
