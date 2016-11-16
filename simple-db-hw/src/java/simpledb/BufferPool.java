@@ -77,11 +77,6 @@ public class BufferPool {
 		if (buffPage != null) {
 			return buffPage;
 		}
-
-		// if the buffer is full panic
-        if (pageBuf.size() == numPages) {
-        	throw new TransactionAbortedException();
-        }   
         
         // load the page from file
 		try {
