@@ -33,7 +33,7 @@ public class BTreeFileInsertTest extends SimpleDbTestBase {
 		Database.reset();
 	}
 
-	// @Test
+	@Test
 	public void testSplitLeafPages() throws Exception {
 		File emptyFile = File.createTempFile("empty", ".dat");
 		emptyFile.deleteOnExit();
@@ -119,6 +119,7 @@ public class BTreeFileInsertTest extends SimpleDbTestBase {
 					otherPage.iterator().next().getKey()));
 		}
 		else { // parentEntry.getRightChild().equals(page.getId())
+			BTreeLeafPage p = (BTreeLeafPage) dirtypages.get(parentEntry.getLeftChild());
 			otherPage = (BTreeInternalPage) dirtypages.get(parentEntry.getLeftChild());
 			assertTrue(field.compare(Op.GREATER_THAN_OR_EQ, 
 					otherPage.reverseIterator().next().getKey()));
