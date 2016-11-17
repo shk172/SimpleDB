@@ -290,7 +290,7 @@ public class BTreeFile implements DbFile {
                 _newLeftPage.insertTuple(_tupleToAdd);            	
             }
             else{
-            	throw new DbException("No more tuples.");
+            	throw new DbException("There are no more tuples available");
             }
 
         }
@@ -377,10 +377,10 @@ public class BTreeFile implements DbFile {
 		_entryToPush = _entryIterator.next();
 		_fieldToPush = _entryToPush.getKey();
 		
-		//Now, we delete the right child from the entry to be pushed
+		//Now, we delete the left child from the entry to be pushed
 		page.deleteKeyAndLeftChild(_entryToPush);
 		
-		//The entry is now the new parent - left child is the old page, and the right child is
+		//The entry is now the new parent - right child is the old page, and the left child is
 		//the new page that we just created and put entries into
 		_entryToPush = new BTreeEntry(_fieldToPush,  _newPage.getId(), page.getId());
 		
