@@ -362,15 +362,15 @@ public class BTreeFile implements DbFile {
 		
 		//get an empty page 
 		BTreeInternalPage _newPage = (BTreeInternalPage) getEmptyPage(tid, dirtypages, BTreePageId.INTERNAL);
-
+		BTreeEntry _entryToAdd = null;
+		BTreeEntry _entryToPush = null;
 		//prepare the loop
 		int _numEntries = page.getNumEntries();
 		int _counter = 0;
-		BTreeEntry pushKey = null;
 		Iterator<BTreeEntry> _entryIterator = page.iterator();
 		
 		while(_entryIterator.hasNext()){
-			BTreeEntry entryToAdd = _entryIterator.next();
+			_entryToAdd = _entryIterator.next();
 			
 			
 			// do nothing to the first half of the list
@@ -378,36 +378,32 @@ public class BTreeFile implements DbFile {
 				_counter++;
 				continue;
 			}
+			if(_counter == _numEntries/2){
+				// the middle entry should be pushed up, not copied
+				_entryToPush = _entryToAdd;
+			}
 			
-			// the middle entry should be pushed up, not copied
-			if (_counter == _numEntries/2) {
-				pushKey = entryToAdd;
+			if (_counter > _numEntries/2) {
 				_counter++;
 				
 				// delete the appropriate entry and the right child from the old page
-				page.deleteKeyAndRightChild(entryToAdd);
+				page.deleteKeyAndRightChild(_entryToAdd);
+				_newPage.insertEntry(_entryToAdd);
 				continue;	
 			}
-			
-			// delete the appropriate entry and the right child from the old page
-			page.deleteKeyAndRightChild(entryToAdd);
-			
-			// move the second half of entries to new page
-			// we need to do something with pointers now
-			_newPage.insertEntry(entryToAdd);
-			_newPage.updateEntry(entryToAdd);
-			dirtypages.put(_newPage.getId(), _newPage);
 			_counter++;
 			
 		}
-		
+		//Looks like we can use updateParentPointers function..?
+		//Literally it updates the parent pointers of the entries. Somehow missed it
+		Field _fieldToPush = _entryToPush.getKey();
 		// get the new parent and update the new page's pointer 
-		BTreeInternalPage _newParent = getParentWithEmptySlots(tid, dirtypages, page.getParentId(), pushKey.getKey());
+		BTreeInternalPage _newParent = getParentWithEmptySlots(tid, dirtypages, page.getParentId(), _fieldToPush);
 		_newPage.setParentId(_newParent.getId());
 		updateParentPointers(tid, dirtypages, _newPage);
 
 		
-		BTreeEntry newEntry = new BTreeEntry(pushKey.getKey(), page.getId(), _newPage.getId());
+		BTreeEntry newEntry = new BTreeEntry(_fieldToPush, page.getId(), _newPage.getId());
 		_newParent.insertEntry(newEntry);
 		_newParent.updateEntry(newEntry);
 		
@@ -416,7 +412,7 @@ public class BTreeFile implements DbFile {
 		dirtypages.put(page.getId(), page);
 		
 		//return the appropriate page
-		if (field.compare(Op.GREATER_THAN_OR_EQ, pushKey.getKey())) {
+		if (field.compare(Op.GREATER_THAN_OR_EQ, _fieldToPush)) {
 			return _newPage;
 		}
 		return page;
