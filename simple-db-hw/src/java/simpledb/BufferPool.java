@@ -75,21 +75,15 @@ public class BufferPool {
         throws TransactionAbortedException, DbException {
     	
     	// look for the page in the buffer
-    	Page buffPage = pageBuf.get(pid.hashCode());
-		if (buffPage != null) {
-			return buffPage;
-		}
-        
-        // load the page from file
-		try {
-			DbFile dbFile = Database.getCatalog().getDatabaseFile(pid.getTableId());
-			Page ret = dbFile.readPage(pid);
-    		pageBuf.put(pid, ret);
-    		return ret;
-		} catch(IllegalArgumentException e) {
-			throw new DbException("pid not in db");
-			}
-
+        if (!pageBuf.containsKey(pid)) {
+        	// load the page from file
+        	DbFile dbFile = Database.getCatalog().getDatabaseFile(pid.getTableId());
+        	Page ret = dbFile.readPage(pid);
+            pageBuf.put(pid, ret);
+            pageBuf.get(pid).setBeforeImage();
+         }
+                 
+         return pageBuf.get(pid);
     }
 
     /**
