@@ -1,0 +1,11 @@
+SangHee Kim
+Partner: James Willis
+Lab 3 Writeup
+
+I think the biggest curveball we faced was the error we were getting while writing the splitInternalPage function. We were initially getting the error that said that buffer pool was full, and thought that it was a fault with the function itself, since we knew that the bufferPool class had passed the system test before. That being said, I wish the system test for the previous lab had accounted for this, because I feel like it was something we could have prepared for earlier and ended up draining a lot more time trying to figure out what the issue was.
+
+I believe the only change we have made outside the BTreeFile.java was removing the check for full buffer pool on bufferPool.getPage() function for the error mentioned above. Before it, we had it set so that if the end of the buffer pool is reached, it throws a DbException error, so we just removed it to pass all the tests in both the unit test and system test. This is only a temporary solution - we will eventually have to change the function again so that buffer pool would start evicting the pages once it gets full.
+
+This lab took the two of us roughly four full nights of work, from Sunday to Thursday night. Conceptually I think we both had a good grasp on what we should do given what we learned in class, but I felt that simpleDb made it more difficult to actually code the B+ tree because it implemented some parts differently than what we were taught. For instance, the problem set led to the answer that we should not use parent pointers, but we had to worry about that in this lab. Also, the diagram on the lab description was different from how simpleDb was actually implemented - each entry would have its own left and right pointers, kind of a doubly-linked list, instead of a list.
+
+While I do not think the above observations made it more difficult to program the lab, I do think it may be something that could be changed. Otherwise, I would suggest that there be a test, or even a blurb, that addresses the issue we had with bufferpool's getPage() function, that we should not worry about it being full at this time.

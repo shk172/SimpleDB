@@ -111,7 +111,7 @@ public class JoinOptimizer {
             // HINT: You may need to use the variable "j" if you implemented
             // a join algorithm that's more complicated than a basic
             // nested-loops join.
-            return -1.0;
+        	return cost1 + (card1 * cost2) + (card1 * card2);
         }
     }
 
@@ -155,9 +155,28 @@ public class JoinOptimizer {
             String field2PureName, int card1, int card2, boolean t1pkey,
             boolean t2pkey, Map<String, TableStats> stats,
             Map<String, Integer> tableAliasToId) {
+    	
         int card = 1;
-        // some code goes here
-        return card <= 0 ? 1 : card;
+        switch (joinOp) {
+			case NOT_EQUALS:
+			case EQUALS: {
+				if (t1pkey)
+					return card2;
+				if (t2pkey) 
+					return card1;
+				if (card1 > card2) 
+					return card1;
+				return card2;
+			}
+			case GREATER_THAN:
+			case GREATER_THAN_OR_EQ:
+			case LESS_THAN:
+			case LESS_THAN_OR_EQ:
+			case LIKE: {
+				return (int)((card1 * card2) * 0.3);
+			}
+        }
+        return 0;
     }
 
     /**
@@ -217,11 +236,41 @@ public class JoinOptimizer {
             HashMap<String, TableStats> stats,
             HashMap<String, Double> filterSelectivities, boolean explain)
             throws ParsingException {
-        //Not necessary for labs 1--3
 
-        // some code goes here
-        //Replace the following
-        return joins;
+    	PlanCache planCache = new PlanCache();
+    	
+    	for (int i = 1; i <= joins.size(); i++) {
+    		for (Set<LogicalJoinNode> joinSet : enumerateSubsets(joins, i)) {
+    			
+    			Vector<LogicalJoinNode> _bestplan = null;
+    			double _bestcost = Double.MAX_VALUE;
+    			int _bestcard = Integer.MAX_VALUE;
+    			    			
+    			for (LogicalJoinNode joinPlan : joinSet) {
+    				CostCard cost = computeCostAndCardOfSubplan(stats, filterSelectivities, joinPlan, joinSet, _bestcost, planCache);
+    				if (cost != null) {
+    					if (cost.cost < _bestcost) {
+    						_bestcost = cost.cost;
+    						_bestplan = cost.plan;
+    						_bestcard = cost.card;
+    					}
+    					planCache.addPlan(joinSet, _bestcost, _bestcard, _bestplan);
+    				}
+    			}
+    		}
+    	}
+    	
+    	if (explain) {
+    		printJoins(joins, planCache, stats, filterSelectivities);
+    	}
+    	
+    	HashSet<LogicalJoinNode> finalSet = new HashSet<LogicalJoinNode>();
+    	for (LogicalJoinNode node : joins) {
+    		finalSet.add(node);
+    	}
+    	
+        Vector<LogicalJoinNode> bestPlanOrder = planCache.getOrder(finalSet);
+        return bestPlanOrder;
     }
 
     // ===================== Private Methods =================================
